@@ -13,7 +13,7 @@ jobs:
 
     env:
       VCPKG_ROOT: ${{ github.workspace }}\extern\vcpkg
-      VCPKG_TARGET_TRIPLET: x64-windows-static-md
+      VCPKG_TARGET_TRIPLET: x64-windows-static
 
     steps:
       - name: Checkout
@@ -36,7 +36,6 @@ jobs:
         run: ${{ env.VCPKG_ROOT }}\vcpkg install
           --triplet ${{ env.VCPKG_TARGET_TRIPLET }}
           --overlay-ports=.\cmake\ports
-          --overlay-triplets=.\cmake\triplets
 
       - name: Configure
         run: >
@@ -47,7 +46,6 @@ jobs:
           -A x64
           -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}\scripts\buildsystems\vcpkg.cmake
           -DVCPKG_TARGET_TRIPLET=${{ env.VCPKG_TARGET_TRIPLET }}
-          -DVCPKG_OVERLAY_TRIPLETS=${{ github.workspace }}\cmake\triplets
 
       - name: Build
         run: >
