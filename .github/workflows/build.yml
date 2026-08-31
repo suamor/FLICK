@@ -1,0 +1,103 @@
+name: Build Flick
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-2022
+
+    env:
+      VCPKG_ROOT: ${{ github.workspace }}\extern\vcpkg
+      VCPKG_TARGET_TRIPLET: x64-windows-static-md
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Fetch vcpkg baseline
+        working-directory: $env:VCPKG_ROOT
+        shell: pwsh
+        run: |
+          git fetch origin edffab1bcd2cb5b8c17d6ba34d5651ea0bf82979
+
+      - name: Bootstrap vcpkg
+        shell: cmd
+        run: $env:VCPKG_ROOT\bootstrap-vcpkg.bat
+
+      - name: Install dependencies
+        run: $env:VCPKG_ROOT\vcpkg install
+          --triplet $env:VCPKG_TARGET_TRIPLET
+          --overlay-ports=.\cmake\ports
+          --overlay-triplets=.\cmake\triplets
+
+      - name: Configure
+        run: >
+          cmake
+          -S .
+          -B build
+          -G "Visual Studio 17 2022"
+          -A x64
+          -DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake
+          -DVCPKG_TARGET_TRIPLET=$env:VCPKG_TARGET_TRIPLET
+          -DVCPKG_OVERLAY_TRIPLETS=${{ github.workspace }}\cmake\triplets
+
+      - name: Build
+        run: >
+          cmake
+          --build build
+          --config Release
+          --parallel
+          --verbose
+
+      - name: Assemble install directory
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $dllName = 'FLICK.dll'
+
+          $dlls = @(
+            Get-ChildItem `
+              -Path build `
+              -Recurse `
+              -File `
+              -Filter $dllName
+          )
+
+          if ($dlls.Count -ne 1) {
+            $dlls | ForEach-Object { Write-Host $_.FullName }
+            throw "Expected exactly one $dllName under build/"
+          }
+
+          New-Item -ItemType Directory -Force -Path package | Out-Null
+
+          Copy-Item `
+            -LiteralPath data `
+            -Destination package `
+            -Recurse `
+            -Force
+
+          $pluginDir = Join-Path $PWD "package\data\SKSE\Plugins"
+
+          New-Item -ItemType Directory -Force -Path $pluginDir | Out-Null
+
+          Copy-Item `
+            -LiteralPath $dlls[0].FullName `
+            -Destination $pluginDir `
+            -Force
+
+      - name: Upload FLICK install
+        if: ${{ success() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: "Fuzz's Legally Intelligible Core Kit-install"
+          path: package/
+          if-no-files-found: error

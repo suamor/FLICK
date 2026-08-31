@@ -2,3 +2,6 @@
 	path = extern/CommonLibSSE
 	url = https://github.com/alandtse/CommonLibVR.git
 	branch = ng
+[submodule "extern/vcpkg"]
+	path = extern/vcpkg
+	url = https://github.com/microsoft/vcpkg
