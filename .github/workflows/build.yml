@@ -30,11 +30,11 @@ jobs:
 
       - name: Bootstrap vcpkg
         shell: cmd
-        run: $env:VCPKG_ROOT\bootstrap-vcpkg.bat
+        run: ${{ env.VCPKG_ROOT }}\bootstrap-vcpkg.bat
 
       - name: Install dependencies
-        run: $env:VCPKG_ROOT\vcpkg install
-          --triplet $env:VCPKG_TARGET_TRIPLET
+        run: ${{ env.VCPKG_ROOT }}\vcpkg install
+          --triplet ${{ $env.VCPKG_TARGET_TRIPLET }}
           --overlay-ports=.\cmake\ports
           --overlay-triplets=.\cmake\triplets
 
