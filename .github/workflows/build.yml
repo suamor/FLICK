@@ -23,7 +23,7 @@ jobs:
           fetch-depth: 0
 
       - name: Fetch vcpkg baseline
-        working-directory: $env:VCPKG_ROOT
+        working-directory: ${{ env.VCPKG_ROOT }}
         shell: pwsh
         run: |
           git fetch origin edffab1bcd2cb5b8c17d6ba34d5651ea0bf82979
